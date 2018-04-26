@@ -1,8 +1,8 @@
-<div class="etw-px-4 etw-my-8 etw-max-w-3xl etw-mx-auto etw-font-sans">
-  <div class='etw-flex etw-mt-6'>
-    <div class='etw-w-3/4 etw-pr-6'>
-      <h1 class='etw-pt-8 etw-text-3xl etw-font-bold'>Your Tailwind styles</h1>
-      <p class='etw-mt-3 etw-mb-4 etw-text-lg'>A reference for every generated class in your app.</p>
+<div class="etw-px-8 etw-my-8 etw-max-w-xl etw-mx-auto etw-font-sans antialiased">
+  <div class='etw-flex justify-between etw-px-6 etw-mt-6'>
+    <div class='etw-w-2/3 etw-pr-8'>
+      <h1 class='etw-pt-8 etw-text-5xl etw-font-semibold'>Calcite Tailwind</h1>
+      <p class='etw-mt-1 etw-mb-8 etw-text-lg text-grey-darkest'>A companion reference for every generated class available in the app.</p>
 
       {{etw/module-section
         title='Border radius'
@@ -10,17 +10,17 @@
         moduleStyles=moduleStyles.borderRadius}}
 
       {{etw/module-section
-        title='Borders'
+        title='Border'
         codeSnippets=(array '.border{-side?}{-width?}')
         moduleStyles=moduleStyles.borderWidths}}
 
       {{etw/module-section
-        title='Colors'
+        title='Color'
         codeSnippets=(array '.text-{color}' '.bg-{color}' '.border-{color}')
         moduleStyles=moduleStyles.colors}}
 
       {{etw/module-section
-        title='Font weights'
+        title='Font weight'
         codeSnippets=(array '.font-{weight}')
         moduleStyles=moduleStyles.fontWeights}}
 
@@ -80,7 +80,7 @@
         moduleStyles=moduleStyles.padding}}
 
       {{etw/module-section
-        title='Shadows'
+        title='Shadow'
         codeSnippets=(array '.shadow-{size?}')
         moduleStyles=moduleStyles.shadows}}
 
@@ -95,7 +95,7 @@
         moduleStyles=moduleStyles.svgStroke}}
 
       {{etw/module-section
-        title='Text sizes'
+        title='Text size'
         codeSnippets=(array '.text-{size}')
         moduleStyles=moduleStyles.textSizes}}
 
@@ -111,7 +111,7 @@
 
     </div>
 
-    <div class='etw-w-1/4 etw-relative'>
+    <div class='etw-w-64 etw-relative flex justify-end'>
       {{etw/module-style-detail}}
     </div>
   </div>
