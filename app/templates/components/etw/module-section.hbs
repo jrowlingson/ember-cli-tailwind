@@ -1,5 +1,5 @@
-<section class="etw-mb-8">
-  <h2 class='etw-pt-8 etw-mb-8 etw-text-2xl etw-font-semibold pb-4 border-b'>{{title}}</h2>
+<section class="etw-mb-6">
+  <h2 class='etw-pt-8 etw-mb-8 etw-text-3xl etw-font-semibold etw-pb-2 etw-border-b etw-border-grey-light'>{{title}}</h2>
   <div class="etw-mt-8 etw-flex {{if shouldDisplayEvenly 'justify-around'}} etw-flex-wrap">
     {{#each moduleStyles as |moduleStyle|}}
       {{etw/module-style-example moduleStyle=moduleStyle}}
@@ -9,7 +9,7 @@
   <ul class='etw-list-reset etw-leading-normal etw-m-4'>
     {{#each codeSnippets as |snippet|}}
       <li>
-        <code class="etw-text-purple-dark etw-font-mono etw-text-xs etw-bg-grey-lighter etw-p-1 rounded">
+        <code class="etw-text-purple-dark etw-font-mono etw-text-xs etw-bg-grey-lighter etw-p-1 etw-rounded">
           {{snippet}}
         </code>
       </li>
