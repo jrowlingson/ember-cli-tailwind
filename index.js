@@ -46,14 +46,14 @@ module.exports = {
     this.tailwindInputPath = this._getInputPath(this.parent.root, buildConfig.path);
   },
 
-  treeForStyles() {
-    if (this.projectType === 'app' && this._hasTailwindConfig()) {
+  treeForStyles(treeForStyles) {
+    if (this.projectType === 'app' && this._hasTailwindConfig() && this._shouldIncludeStyles()) {
       return this._buildTailwind();
     }
   },
 
   treeForAddonStyles() {
-    if (this.projectType === 'addon' && this._hasTailwindConfig()) {
+    if (this.projectType === 'addon' && this._hasTailwindConfig() && this._shouldIncludeStyles()) {
       return this._buildTailwind();
     }
   },
@@ -63,6 +63,13 @@ module.exports = {
     let shouldOverrideDefault = envConfig !== undefined && envConfig.shouldIncludeStyleguide !== undefined;
     return shouldOverrideDefault ? envConfig.shouldIncludeStyleguide : process.env.EMBER_ENV !== 'production';
   },
+
+  _shouldIncludeStyles() {
+    let envConfig = this.project.config(process.env.EMBER_ENV)[this.name];
+    let shouldOverrideDefault = envConfig !== undefined && envConfig.shouldIncludeStyles !== undefined;
+    return shouldOverrideDefault ? envConfig.shouldIncludeStyles : true;
+  },
+
 
   // Private
 
