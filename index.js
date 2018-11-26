@@ -2,8 +2,11 @@
 
 const fs = require('fs');
 const path = require('path');
-const Rollup = require('broccoli-rollup');
-const BuildTailwindPlugin = require('./lib/build-tailwind-plugin');
+const Funnel = require('broccoli-funnel');
+const Merge = require('broccoli-merge-trees');
+const buildTailwind = require('./lib/build-tailwind');
+const mv = require('broccoli-stew').mv;
+const debugTree = require('broccoli-debug').buildDebugCallback(`ember-cli-tailwind:${this.name}`);
 
 const buildDestinations = {
   dummy: {
@@ -25,12 +28,29 @@ const validBuildTargets = Object.keys(buildDestinations);
 module.exports = {
   name: 'ember-cli-tailwind',
 
+  isDevelopingAddon() {
+    return true;
+  },
+
   included(includer) {
     this._super.included.apply(this, arguments);
 
-    let buildTarget = includer.options &&
+    // If this is set, show a warning
+    let explicitBuildTarget = includer.options &&
       includer.options[this.name] &&
       includer.options[this.name]['buildTarget'];
+    if (explicitBuildTarget) {
+      this.ui.writeWarnLine('You no longer need to specify a buildTarget - it is now derived from your project files. Please delete this config option.')
+    }
+
+    let buildTarget;
+    if (fs.existsSync(!this.project.isEmberCLIAddon() && this.project.root + '/app/tailwind')) {
+      buildTarget = 'app';
+    } else if (fs.existsSync(includer.root + '/addon/tailwind')) {
+      buildTarget = 'addon';
+    } else if (includer.name === "dummy" && fs.existsSync(process.cwd() + '/tests/dummy/app/tailwind')) {
+      buildTarget = 'dummy';
+    }
 
     if (!this._validateBuildTarget(buildTarget, includer)) {
       return;
@@ -46,20 +66,40 @@ module.exports = {
     this.tailwindInputPath = this._getInputPath(this.parent.root, buildConfig.path);
   },
 
-  treeForStyles(treeForStyles) {
-    if (this.projectType === 'app' && this._hasTailwindConfig() && this._shouldIncludeStyles()) {
-      return this._buildTailwind();
+  treeForStyles(tree) {
+    let trees = tree ? [ tree ] : [];
+
+    if (this.projectType === 'app' && this._hasTailwindConfig() && this._shouldBuildTailwind()) {
+      trees.push(mv(buildTailwind(this), 'app/styles'));
     }
+
+    return debugTree(new Merge(trees), 'tree-for-styles');
   },
 
-  treeForAddonStyles() {
-    if (this.projectType === 'addon' && this._hasTailwindConfig() && this._shouldIncludeStyles()) {
-      return this._buildTailwind();
+  treeForAddonStyles(tree) {
+    let trees = tree ? [ tree ] : [];
+
+    if (this.projectType === 'addon' && this._hasTailwindConfig() && this._shouldBuildTailwind()) {
+      trees.push(mv(buildTailwind(this), 'addon/styles'));
     }
+
+    return debugTree(new Merge(trees), 'tree-for-addon-styles');
+  },
+
+  treeForApp(tree) {
+    let appTree = this._super(tree);
+
+    if (!this._shouldIncludeStyleguide()) {
+      appTree = new Funnel(appTree, {
+        exclude: ['**/instance-initializers/ember-cli-tailwind.js'],
+      });
+    }
+
+    return debugTree(appTree, 'tree-for-app');
   },
 
   _shouldIncludeStyleguide() {
-    let envConfig = this.project.config(process.env.EMBER_ENV)[this.name];
+    let envConfig = this.parent.config(process.env.EMBER_ENV)[this.name];
     let shouldOverrideDefault = envConfig !== undefined && envConfig.shouldIncludeStyleguide !== undefined;
     return shouldOverrideDefault ? envConfig.shouldIncludeStyleguide : process.env.EMBER_ENV !== 'production';
   },
@@ -89,22 +129,10 @@ module.exports = {
     return this.tailwindInputPath;
   },
 
-  _buildTailwind() {
-    let basePath = this.projectType === 'app' ? 'app/styles' : '';
-    let tailwindConfig = new Rollup(this.tailwindInputPath, {
-      rollup: {
-        input: 'config/tailwind.js',
-        output: {
-          file: 'tailwind-config.js',
-          format: 'cjs'
-        }
-      }
-    });
+  _shouldBuildTailwind() {
+    let shouldBuildTailwind = this._config().shouldBuildTailwind;
 
-    return new BuildTailwindPlugin([this.tailwindInputPath, tailwindConfig], {
-      srcFile: path.join('modules.css'),
-      destFile: path.join(basePath, 'tailwind.css')
-    });
+    return (shouldBuildTailwind !== undefined) ? shouldBuildTailwind : true;
   },
 
   _validateBuildTarget(buildTarget) {
@@ -115,7 +143,7 @@ module.exports = {
     // tailwind in both their addon and dummy app.
     if (!buildTarget) {
       if (!this._isAddon()) {
-        this.ui.writeWarnLine('You must specify a buildTarget using an ember-cli-tailwind config object in your app or addon.')
+        this.ui.writeWarnLine('No build target was detected for ember-cli-tailwind. Tailwind is not being included in your project.')
       }
       return false;
     }
@@ -146,6 +174,10 @@ module.exports = {
   _isDependency() {
     let deps = this.parent.pkg.dependencies;
 
-    return Object.keys(deps).includes(this.name);
+    return deps && Object.keys(deps).includes(this.name);
+  },
+
+  _config() {
+    return this.parent.config(process.env.EMBER_ENV)[this.name] || {};
   }
 };

@@ -1,9 +1,9 @@
----
 language: node_js
+node_js:
+  - "8"
+
 sudo: false
 dist: trusty
-node_js:
-  - "6"
 
 addons:
   chrome: stable
@@ -11,57 +11,75 @@ addons:
 cache:
   yarn: true
   directories:
-    - $HOME/.npm
-    - $HOME/.cache # includes bowers cache
+    - "$HOME/.npm"
+    - "$HOME/.cache"
     - node_modules
 
 env:
   global:
     - JOBS=1
 
-before_install:
-  - curl -o- -L https://yarnpkg.com/install.sh | bash
-  - export PATH=$HOME/.yarn/bin:$PATH
-
 install:
-  - yarn install
+  - yarn install --no-lockfile --non-interactive
 
 notifications:
   email: false
-
-stages:
-  - test
-  - additional tests
-  - fastboot tests
-  - versioned tests
-
-script:
-  - node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
 
 jobs:
   fail_fast: true
 
   include:
-    - stage: test
-      env: NAME=test
-      script: yarn test
+    - stage: locked dependencies
+      env: NAME=browser tests
+      install: yarn install
+      script: yarn test:browser
+    - env: NAME=node-tests
+      install: yarn install
+      script: yarn test:node
+    - env: NAME=test-projects
+      install: yarn install
+      script: yarn test:test-projects
 
-    - stage: additional tests
-      env: NAME=floating dependencies
-      install: yarn install --no-lockfile --non-interactive
-      script: yarn test
+    - stage: floating dependencies
+      env: NAME=browser tests
+      script: yarn test:browser
+    - env: NAME=node tests
+      script: yarn test:node
+    - env: NAME=test-projects
+      script: yarn test:test-projects
 
     - stage: fastboot tests
-      node_js: "8"
       env: NAME=fastboot tests
       script: yarn test:fastboot
 
     - stage: versioned tests
-      env: EMBER_TRY_SCENARIO=ember-lts-2.8
-    - env: EMBER_TRY_SCENARIO=ember-lts-2.12
+      env: EMBER_TRY_SCENARIO=ember-lts-2.12
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
     - env: EMBER_TRY_SCENARIO=ember-lts-2.16
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
     - env: EMBER_TRY_SCENARIO=ember-lts-2.18
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
     - env: EMBER_TRY_SCENARIO=ember-release
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
+    - env: EMBER_TRY_SCENARIO=ember-beta
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
+    - env: EMBER_TRY_SCENARIO=ember-canary
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
+    - env: EMBER_TRY_SCENARIO=ember-default
+      script: node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO --skip-cleanup
+
+    - stage: npm release
+      install: skip
+      script: skip
+      deploy:
+        provider: npm
+        email: sam.selikoff@gmail.com
+        api_key:
+          secure: tZ0Ca9sS8lcXIED8QtKwT5kwo4q1jtGoIWVCw9y8Abkwth8CQP4NlY6kgnnoC1hR4qe+2WnNOzH52Ph7USbf4gmeE8FyE1IIZ2IjmedCJB7Q1j7ZOcpbX+hL2RJgAWW1Uoutch3Y8myfHTOFG5SL8oFkf8m89IlX+X1KzB7wXyu8BfQr8eQZwUDQC+UXpJ8kE9gA+6fJmY5Do4wQHxFNgtmhROUhGfPYFc4ysb/TnaJS2fvOSvB78cjcFDlqAHhp3toP3PMFt/N7o/bU9E6eetYwp1bGoMlqfQRCg1YriZ+KcoRHgbbM4XWqveiu27z4mdOJIWUPdCvByvwyftCyZ/AhOHAfboteHX9dcRP6DyMQmt9XHpg5LNt5hjn2dNXgRigKApZOsyXNRzRTM0VnZNxavE+evLVIy6/Od+rb8YkDk2MIX4C/Sjw4EOkwU1LZlrY899g1/1XMOdVMpB0TC4ekFDQeRR7tddMcvXSjZ9QDFpCzdJkYQx5e+isqr1XaaZt0dcLYqcbPPXd7P5gWVh+gB2siIHQcQKeBslRTW8YjkL025WoXkAVymvPlZFkanXwiPNVXp6a5xVpwSKzsvwawpg/7V0MzxzqKANexQ6/X3ETbBNnnh29OaVuuN2NXR4UG+CZhcT/eNDhoUMyaHZuBcDYJql5jOuq22VloSH0=
+        on:
+          tags: true
+          repo: embermap/ember-cli-tailwind
+
+  allow_failures:
     - env: EMBER_TRY_SCENARIO=ember-beta
     - env: EMBER_TRY_SCENARIO=ember-canary
-    - env: EMBER_TRY_SCENARIO=ember-default

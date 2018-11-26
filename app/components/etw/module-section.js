@@ -1,1 +1,5 @@
-export { default } from 'ember-cli-tailwind/components/etw/module-section';
+import Component from '@ember/component';
+
+export default Component.extend({
+  tagName: '',
+});
